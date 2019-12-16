@@ -1,0 +1,5 @@
+.ccls-cache
+build
+.ccls
+a.out
+debugout
