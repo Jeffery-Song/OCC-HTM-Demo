@@ -6,12 +6,11 @@
 #include <set>
 
 
-// template<typename PayloadT>
+template<typename PayloadT>
 class Transaction {
   private:
-    using PayloadT = PayloadType;
     struct buff_item {
-        Row* ptr = nullptr;
+        Row<PayloadT>* ptr = nullptr;
         uint64_t version = 0;
         PayloadT data;
     };
@@ -19,7 +18,7 @@ class Transaction {
     std::set<KeyType> wset, iset;
     // std::map<KeyType, buff_item> wset;
 
-    ConcurrentHashMap * table;
+    ConcurrentHashMap<PayloadT> * table;
     // boost::pool<> *pool;
 
     buff_item* try_local(KeyType key, bool & buffed, bool & exist) {
@@ -40,7 +39,7 @@ class Transaction {
     }
 
     buff_item & buff_from_db(KeyType key) {
-        Row* row = (Row*)table->Read_or_Insert(key);
+        Row<PayloadT>* row = (Row<PayloadT>*)table->Read_or_Insert(key);
         buff_item buff_row;
         buff_row.ptr = row;
         row->lock();
@@ -65,8 +64,8 @@ class Transaction {
         }
     }
   public:
-    // Transaction(ConcurrentHashMap * table, boost::pool<> * pool) : table(table), pool(pool) {}
-    Transaction(ConcurrentHashMap * table) : table(table) {}
+    // Transaction(ConcurrentHashMap<PayloadT> * table, boost::pool<> * pool) : table(table), pool(pool) {}
+    Transaction(ConcurrentHashMap<PayloadT> * table) : table(table) {}
     PayloadT Read(KeyType key, RC* rc = nullptr) {
         bool buffed, exist;
         buff_item * buff_row_ptr = try_local(key, buffed, exist);

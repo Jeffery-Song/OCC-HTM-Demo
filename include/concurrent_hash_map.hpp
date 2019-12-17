@@ -8,13 +8,14 @@
 #include <unordered_map>
 #include <boost/pool/pool.hpp>
 
+template<typename PayloadT>
 class ConcurrentHashMap {
   private:
     mutable RWSpinLock _lock;
     std::unordered_map<KeyType, void*> _db;
-    RowPool *row_pool;
+    RowPool<PayloadT> *row_pool;
   public:
-    ConcurrentHashMap(RowPool * row_pool) : _lock(false), row_pool(row_pool) {
+    ConcurrentHashMap(RowPool<PayloadT> * row_pool) : _lock(false), row_pool(row_pool) {
     }
     void* Read_or_Insert(const KeyType key) {
         _lock.rlock();

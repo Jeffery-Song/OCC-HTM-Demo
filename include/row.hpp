@@ -2,10 +2,9 @@
 #include "util.hpp"
 #include <pthread.h>
 
-// template<typename PayloadT>
+template<typename PayloadT>
 class Row { 
   private:
-    using PayloadT = PayloadType;
     uint64_t _version = 0;
     pthread_spinlock_t _lock;
   public:

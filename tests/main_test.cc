@@ -1,12 +1,10 @@
-
-#define PayloadType uint32_t
-
 #include "transaction.hpp"
 #include "row_pool.hpp"
 
+#define TestPayloadT uint32_t
 
-RowPool* row_pool;
-ConcurrentHashMap* db;
+RowPool<TestPayloadT>* row_pool;
+ConcurrentHashMap<TestPayloadT>* db;
 
 const int length = 1000;
 const unsigned int concurrent_level = 50;
@@ -16,7 +14,7 @@ static void* func(void *) {
         uint32_t pre;
         uint32_t post;
         while(true) {
-            Transaction txn(db);
+            Transaction<TestPayloadT> txn(db);
             pre = txn.Read(i - 1);
             post = txn.Read(i);
             if (pre > 0) {
@@ -32,16 +30,16 @@ static void* func(void *) {
 }
 
 int main() {
-    row_pool = new RowPool();
-    db = new ConcurrentHashMap(row_pool);
-    Transaction loader(db);
+    row_pool = new RowPool<TestPayloadT>();
+    db = new ConcurrentHashMap<TestPayloadT>(row_pool);
+    Transaction<TestPayloadT> loader(db);
     loader.Insert(0, concurrent_level);
     for (int i = 1; i < length; i++) {
         loader.Insert(i, 0u);
     }
     assert(loader.Commit());
 
-    Transaction validator1(db);
+    Transaction<TestPayloadT> validator1(db);
     ASSERT_EQ(validator1.Read(0), concurrent_level);
     for (int i = 1; i < length; i++) {
         ASSERT_EQ(validator1.Read(i), 0u);
@@ -59,7 +57,7 @@ int main() {
     for (int i = 0; i < concurrent_level; i++)
         pthread_join(tids[i], NULL);
 
-    Transaction validator2(db);
+    Transaction<TestPayloadT> validator2(db);
     for (int i = 0; i < length-1; i++) {
         assert(validator2.Read(i) == 0u);
     }

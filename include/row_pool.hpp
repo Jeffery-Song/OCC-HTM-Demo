@@ -2,21 +2,20 @@
 #include "row.hpp"
 #include <boost/pool/pool.hpp>
 
-// template<typename PayloadT>
 
+template<typename PayloadT>
 class RowPool {
   private:
-    using PayloadT = PayloadType;
     boost::pool<> _pool;
   public:
-    RowPool() : _pool(sizeof(Row)) {}
+    RowPool() : _pool(sizeof(Row<PayloadT>)) {}
     void* malloc() {
         void * rst = _pool.malloc();
-        rst = new(rst) Row;
+        rst = new(rst) Row<PayloadT>;
         return rst;
     }
     void free(void* ptr) {
-        ((Row*)ptr)->~Row();
+        ((Row<PayloadT>*)ptr)->~Row<PayloadT>();
         _pool.free(ptr);
     }
 };

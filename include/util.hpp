@@ -7,10 +7,6 @@
 
 using KeyType = uint32_t;
 
-#ifndef PayloadType
-#define PayloadType uint32_t
-#endif
-
 enum RC {
     Ok = 0,
     Abort,
