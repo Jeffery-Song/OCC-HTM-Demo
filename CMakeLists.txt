@@ -13,6 +13,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 ## Set include paths
 include_directories(include)
+include_directories(benchmark)
 
 ## Source code
 file(GLOB SOURCES "include/*.hpp")
@@ -30,6 +31,10 @@ file(GLOB SOURCES "include/*.hpp")
 ## Build Wukong
 # add_executable(server ${SOURCES} "src/server_main.cpp")
 # target_link_libraries(server)
+
+file(GLOB BENCH "benchmark/main.cc")
+add_executable(bench ${BENCH})
+target_link_libraries(benck)
 
 file(GLOB TS  "tests/*.cc")
 add_executable(coretest ${TS} )
