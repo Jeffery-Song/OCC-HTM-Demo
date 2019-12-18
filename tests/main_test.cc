@@ -1,9 +1,7 @@
 #include "transaction.hpp"
-#include "row_pool.hpp"
 
 #define TestPayloadT uint32_t
 
-RowPool<TestPayloadT>* row_pool;
 ConcurrentHashMap<TestPayloadT>* db;
 
 const int length = 1000;
@@ -30,8 +28,7 @@ static void* func(void *) {
 }
 
 int main() {
-    row_pool = new RowPool<TestPayloadT>();
-    db = new ConcurrentHashMap<TestPayloadT>(row_pool);
+    db = new ConcurrentHashMap<TestPayloadT>();
     Transaction<TestPayloadT> loader(db);
     loader.Insert(0, concurrent_level);
     for (int i = 1; i < length; i++) {
@@ -64,4 +61,5 @@ int main() {
     assert(validator2.Read(length-1) == concurrent_level);
     assert(validator2.Commit());
     fprintf(stderr, "Validation Passed!\n");
+    delete db;
 }

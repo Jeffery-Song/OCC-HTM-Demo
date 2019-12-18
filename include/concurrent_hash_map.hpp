@@ -13,10 +13,9 @@ class ConcurrentHashMap {
   private:
     mutable RWSpinLock _lock;
     std::unordered_map<KeyType, void*> _db;
-    RowPool<PayloadT> *row_pool;
+    RowPool<PayloadT> row_pool;
   public:
-    ConcurrentHashMap(RowPool<PayloadT> * row_pool) : _lock(false), row_pool(row_pool) {
-    }
+    ConcurrentHashMap() : _lock(false), row_pool() {}
     void* Read_or_Insert(const KeyType key) {
         _lock.rlock();
         auto iter = _db.find(key);
@@ -33,7 +32,7 @@ class ConcurrentHashMap {
             _lock.unlock();
             return r;
         }
-        void* ptr = row_pool->malloc();
+        void* ptr = row_pool.malloc();
         _db[key] = ptr;
         _lock.unlock();
         return ptr;
