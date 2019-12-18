@@ -19,7 +19,6 @@ class Transaction {
     // std::map<KeyType, buff_item> wset;
 
     ConcurrentHashMap<PayloadT> * table;
-    // boost::pool<> *pool;
 
     buff_item* try_local(KeyType key, bool & buffed, bool & exist) {
         buffed = false;
@@ -64,7 +63,6 @@ class Transaction {
         }
     }
   public:
-    // Transaction(ConcurrentHashMap<PayloadT> * table, boost::pool<> * pool) : table(table), pool(pool) {}
     Transaction(ConcurrentHashMap<PayloadT> * table) : table(table) {}
     PayloadT Read(KeyType key, RC* rc = nullptr) {
         bool buffed, exist;
@@ -179,9 +177,16 @@ class Transaction {
     bool Commit() {
         if (Validate()) {
             WriteBack();
+            clear();
             return true;
         }
         unlock_wset();
+        clear();
         return false;
+    }
+    void clear() {
+        buffer.clear();
+        wset.clear();
+        iset.clear();
     }
 };
