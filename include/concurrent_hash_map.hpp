@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <boost/pool/pool.hpp>
 
-#ifdef USE_RTM
+#ifdef USE_RTM_STORE
 #include "rocc/rocc_htm.hpp"
 #else
 #include "rw_spin_lock.hpp"
@@ -16,7 +16,7 @@
 template<typename PayloadT>
 class ConcurrentHashMap {
   private:
-#ifdef USE_RTM
+#ifdef USE_RTM_STORE
     SpinLock _store_lock;
 #else
     mutable RWSpinLock _lock;
@@ -24,13 +24,14 @@ class ConcurrentHashMap {
     std::unordered_map<KeyType, void*> _db;
     RowPool<PayloadT> row_pool;
   public:
-#ifdef USE_RTM
+#ifdef USE_RTM_STORE
     ConcurrentHashMap() : row_pool() {}
 #else
     ConcurrentHashMap() : _lock(false), row_pool() {}
 #endif
     void* Read_or_Insert(const KeyType key) {
-#ifdef USE_RTM
+#ifdef USE_RTM_STORE
+        fprintf(stderr, "read or insert a rtm store\n");
         void * ret = nullptr;
         {
             RTMScope rtm(&_store_lock);
@@ -68,7 +69,7 @@ class ConcurrentHashMap {
 #endif
     }
     void* Read(const KeyType key) const {
-#ifdef USE_RTM
+#ifdef USE_RTM_STORE
         void * ret = nullptr;
         {
             RTMScope rtm(&_store_lock);

@@ -6,7 +6,7 @@
 #include <set>
 
 
-#ifdef USE_RTM
+#ifdef USE_RTM_TXN
 #include "rocc/rocc_htm.hpp"
 #else
 #include "rw_spin_lock.hpp"
@@ -27,7 +27,9 @@ class Transaction {
 
     ConcurrentHashMap<PayloadT> * table;
 
+#ifdef USE_RTM_TXN
     SpinLock _txn_lock;
+#endif
 
     buff_item* try_local(KeyType key, bool & buffed, bool & exist) {
         buffed = false;
@@ -50,7 +52,7 @@ class Transaction {
         Row<PayloadT>* row = (Row<PayloadT>*)table->Read_or_Insert(key);
         buff_item buff_row;
         buff_row.ptr = row;
-#ifdef USE_RTM
+#ifdef USE_RTM_TXN
         {
             RTMScope rtm(&_txn_lock); {
                 buff_row.data = row->payload;
@@ -162,7 +164,7 @@ class Transaction {
         if (rc) *rc = RC::Ok;
     }
     bool Validate() {
-#ifdef USE_RTM
+#ifdef USE_RTM_TXN
         for (auto & iter : buffer) {
             if (iter.second.ptr->get_version() != iter.second.version) {
                 // validation fail
@@ -204,7 +206,7 @@ class Transaction {
     }
     bool Commit() {
         bool ret = false;;
-#ifdef USE_RTM
+#ifdef USE_RTM_TXN
         {
             RTMScope rtm(&_txn_lock);{
                 if (Validate()) {
