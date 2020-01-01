@@ -16,7 +16,9 @@
 template<typename PayloadT>
 class ConcurrentHashMap {
   private:
-#ifndef USE_RTM
+#ifdef USE_RTM
+    SpinLock _store_lock;
+#else
     mutable RWSpinLock _lock;
 #endif
     std::unordered_map<KeyType, void*> _db;
@@ -31,7 +33,7 @@ class ConcurrentHashMap {
 #ifdef USE_RTM
         void * ret = nullptr;
         {
-            RTMScope rtm;
+            RTMScope rtm(&_store_lock);
             {
                 auto iter = _db.find(key);
                 if (iter != _db.end()) {
@@ -69,7 +71,7 @@ class ConcurrentHashMap {
 #ifdef USE_RTM
         void * ret = nullptr;
         {
-            RTMScope rtm;
+            RTMScope rtm(&_store_lock);
             {
                 const auto & iter = _db.find(key);
                 if (iter == _db.end()) {

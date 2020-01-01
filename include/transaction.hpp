@@ -6,6 +6,13 @@
 #include <set>
 
 
+#ifdef USE_RTM
+#include "rocc/rocc_htm.hpp"
+#else
+#include "rw_spin_lock.hpp"
+#endif
+
+
 template<typename PayloadT>
 class Transaction {
   private:
@@ -19,6 +26,8 @@ class Transaction {
     // std::map<KeyType, buff_item> wset;
 
     ConcurrentHashMap<PayloadT> * table;
+
+    SpinLock _txn_lock;
 
     buff_item* try_local(KeyType key, bool & buffed, bool & exist) {
         buffed = false;
@@ -41,10 +50,19 @@ class Transaction {
         Row<PayloadT>* row = (Row<PayloadT>*)table->Read_or_Insert(key);
         buff_item buff_row;
         buff_row.ptr = row;
+#ifdef USE_RTM
+        {
+            RTMScope rtm(&_txn_lock); {
+                buff_row.data = row->payload;
+                buff_row.version = row->get_version();
+            }
+        }
+#else
         row->lock();
         buff_row.data = row->payload;
         buff_row.version = row->get_version();
         row->unlock();
+#endif
         buffer[key] = buff_row;
         // fprintf(stderr, "extract %u in db, val is %u, vn is %lu\n", key, buffer[key].data, buffer[key].version);
         return buffer[key];
@@ -144,8 +162,17 @@ class Transaction {
         if (rc) *rc = RC::Ok;
     }
     bool Validate() {
+#ifdef USE_RTM
+        for (auto & iter : buffer) {
+            if (iter.second.ptr->get_version() != iter.second.version) {
+                // validation fail
+                return false;
+            }
+        }
+        return true;
+#else
         bool success = true;
-        lock_wset();
+        // lock_wset();
 
         for (auto & iter : buffer) {
             bool should_unlock = false;
@@ -162,6 +189,7 @@ class Transaction {
             if (should_unlock) iter.second.ptr->unlock();
         }
         return success;
+#endif
     }
     void WriteBack() {
         for (auto key : wset) {
@@ -172,17 +200,29 @@ class Transaction {
             buffer.at(key).ptr->payload = buffer.at(key).data;
             buffer.at(key).ptr->inc_version();
         }
-        unlock_wset();
+        // unlock_wset();
     }
     bool Commit() {
+        bool ret = false;;
+#ifdef USE_RTM
+        {
+            RTMScope rtm(&_txn_lock);{
+                if (Validate()) {
+                    ret = true;
+                    WriteBack();
+                }
+            }
+        }
+#else
+        lock_wset();
         if (Validate()) {
+            ret = true;
             WriteBack();
-            clear();
-            return true;
         }
         unlock_wset();
+#endif
         clear();
-        return false;
+        return ret;
     }
     void clear() {
         buffer.clear();
