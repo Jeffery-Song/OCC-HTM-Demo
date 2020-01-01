@@ -45,10 +45,10 @@
 
 #define MAXCONFLICT 100
 
-#define MAXWRITE 64
-#define MAXREAD 128
+#define MAXRETRY 100
 
-#define SIMPLERETY 0
+
+#define SIMPLERETY 1
 
 class RTMScope {
 
@@ -94,8 +94,9 @@ class RTMScope {
 
             } else {
 
+#if SIMPLERETY
                 retry++;
-                //if (prof!= NULL) prof->recordAbortStatus(stat);
+#else
                 if((stat & _XABORT_NESTED) != 0)
                     nested++;
                 else if(stat == 0)
@@ -106,6 +107,7 @@ class RTMScope {
                 else if((stat & _XABORT_CAPACITY) != 0)
                     capacity++;
 
+#endif
                 if((stat & _XABORT_EXPLICIT) && _XABORT_CODE(stat) == 0xff) {
                     while(slock->IsLocked())
                         _mm_pause();
@@ -116,7 +118,7 @@ class RTMScope {
                 }
 
 #if SIMPLERETY
-                if(retry > 100)
+                if(retry > MAXRETRY)
                     break;
 #else
 
