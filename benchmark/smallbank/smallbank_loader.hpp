@@ -28,7 +28,7 @@ class SmallBankLoader {
         SBTxn txn(db);
         for (int id = start_id; id < stop_id; id++) {
             Account acc = gen(id, rand);
-            fprintf(stderr, "loading id=%d\n", id);
+            // fprintf(stderr, "loading id=%d\n", id);
             txn.Insert(id, acc);
             bulk_size++;
             if (bulk_size >= SmallBankConstants::BULK_LOAD_SIZE) {
