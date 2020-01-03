@@ -6,7 +6,29 @@
 #include <thread>
 #include <fstream>
 
-int main() {
+int main(int argc, char** argv) {
+    int opt;
+    while ((opt = getopt(argc, argv, "hc:s:")) != -1) {
+        switch (opt) {
+        case 'c':
+            SmallBankConstants::NUM_CLIENTS = atoi(optarg);
+            break;
+        case 'h':
+            SmallBankConstants::ENABLE_HOTSPOT = true;
+            break;
+        case 's':
+            SmallBankConstants::HOTSPOT_FIXED_SIZE = atoi(optarg);
+            break;
+        default: /* '?' */
+            fprintf(stderr, "Usage: %s [-c numclients] [-h] [-s hot_size] \n", argv[0]);
+            exit(EXIT_FAILURE);
+        }
+    }
+    std::cerr << "Smallbank running with " 
+              << SmallBankConstants::NUM_CLIENTS << " clients,"
+              << " hotspot enabled is " << SmallBankConstants::ENABLE_HOTSPOT
+              << " hotspot size is " << SmallBankConstants::HOTSPOT_FIXED_SIZE
+              << std::endl;
     SBDb db;
     SmallBankLoader sb_loader(&db);
     sb_loader.load();
