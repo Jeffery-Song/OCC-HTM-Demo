@@ -15,6 +15,9 @@
 
 template<typename PayloadT>
 class ConcurrentHashMap {
+  public:
+    static thread_local uint64_t rtm_use_lock;
+    static thread_local uint64_t rtm_retry;
   private:
 #ifdef USE_RTM_STORE
     SpinLock _store_lock;
@@ -31,10 +34,10 @@ class ConcurrentHashMap {
 #endif
     void* Read_or_Insert(const KeyType key) {
 #ifdef USE_RTM_STORE
-        fprintf(stderr, "read or insert a rtm store\n");
+        // fprintf(stderr, "read or insert a rtm store\n");
         void * ret = nullptr;
         {
-            RTMScope rtm(&_store_lock);
+            RTMScope rtm(rtm_retry, rtm_use_lock, &_store_lock);
             {
                 auto iter = _db.find(key);
                 if (iter != _db.end()) {
@@ -68,32 +71,10 @@ class ConcurrentHashMap {
         return ptr;
 #endif
     }
-    void* Read(const KeyType key) const {
-#ifdef USE_RTM_STORE
-        void * ret = nullptr;
-        {
-            RTMScope rtm(&_store_lock);
-            {
-                const auto & iter = _db.find(key);
-                if (iter == _db.end()) {
-                    ret = nullptr;
-                } else {
-                    ret = _db.at(key);
-                }
-            }
-        }
-        return ret;
-#else
-        _lock.rlock();
-        const auto & iter = _db.find(key);
-        if (iter == _db.end()) {
-            _lock.unlock();
-            return nullptr;
-        }
-        void* r = _db.at(key);
-        _lock.unlock();
-        return r;
-#endif
-    }
 };
 
+
+template<typename PayloadT>
+thread_local uint64_t ConcurrentHashMap<PayloadT>::rtm_use_lock = 0;
+template<typename PayloadT>
+thread_local uint64_t ConcurrentHashMap<PayloadT>::rtm_retry = 0;

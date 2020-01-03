@@ -15,6 +15,9 @@
 
 template<typename PayloadT>
 class Transaction {
+  public:
+    uint64_t rtm_retry_cnt = 0;
+    uint64_t rtm_use_lock = 0;
   private:
     struct buff_item {
         Row<PayloadT>* ptr = nullptr;
@@ -54,7 +57,7 @@ class Transaction {
         buff_row.ptr = row;
 #ifdef USE_RTM_TXN
         {
-            RTMScope rtm(&_txn_lock); {
+            RTMScope rtm(rtm_retry_cnt, rtm_use_lock, &_txn_lock); {
                 buff_row.data = row->payload;
                 buff_row.version = row->get_version();
             }
@@ -208,7 +211,7 @@ class Transaction {
         bool ret = false;;
 #ifdef USE_RTM_TXN
         {
-            RTMScope rtm(&_txn_lock);{
+            RTMScope rtm(rtm_retry_cnt, rtm_use_lock, &_txn_lock); {
                 if (Validate()) {
                     ret = true;
                     WriteBack();

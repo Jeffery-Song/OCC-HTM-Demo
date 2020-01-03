@@ -35,15 +35,6 @@
 #include <cstdint>
 #include "rocc/spinlock.hpp"
 
-#define MAXNEST 0
-#define NESTSTEP 0
-#define MAXZERO 0
-
-//This number is just for performance debugging
-//#define MAXCAPACITY 1024
-#define MAXCAPACITY 1
-
-#define MAXCONFLICT 100
 
 #define MAXRETRY 100
 
@@ -53,26 +44,19 @@
 class RTMScope {
 
     int retry;
-    int conflict;
-    int capacity;
-    int nested;
-    int zero;
-    uint64_t befcommit;
-    uint64_t aftcommit;
     SpinLock* slock;
+    uint64_t & retry_ret;
+    uint64_t & use_lock;
 
   public:
 
     static SpinLock fblock;
 
-    inline RTMScope(SpinLock* sl = NULL) {
+    inline RTMScope(uint64_t & retry_ret, uint64_t & use_lock, SpinLock* sl = NULL)
+         : retry_ret(retry_ret), use_lock(use_lock) {
         //  inline RTMScope(TXProfile* prof, int read = 1, int write = 1, SpinLock* sl = NULL) {
 
         retry = 0;
-        conflict = 0;
-        capacity = 0;
-        zero = 0;
-        nested = 0;
 
         if(sl == NULL) {
             //If the user doesn't provide a lock, we give him a default locking
@@ -96,17 +80,6 @@ class RTMScope {
 
 #if SIMPLERETY
                 retry++;
-#else
-                if((stat & _XABORT_NESTED) != 0)
-                    nested++;
-                else if(stat == 0)
-                    zero++;
-                else if((stat & _XABORT_CONFLICT) != 0) {
-                    conflict++;
-                }
-                else if((stat & _XABORT_CAPACITY) != 0)
-                    capacity++;
-
 #endif
                 if((stat & _XABORT_EXPLICIT) && _XABORT_CODE(stat) == 0xff) {
                     while(slock->IsLocked())
@@ -120,22 +93,6 @@ class RTMScope {
 #if SIMPLERETY
                 if(retry > MAXRETRY)
                     break;
-#else
-
-                int step = 1;
-
-                if (nested > MAXNEST)
-                    break;
-                if(zero > MAXZERO/step) {
-                    break;
-                }
-
-                if(capacity > MAXCAPACITY / step) {
-                    break;
-                }
-                if (conflict > MAXCONFLICT/step) {
-                    break;
-                }
 #endif
             }
         }
@@ -147,10 +104,13 @@ class RTMScope {
     }
 
     inline  ~RTMScope() {
-        if(slock->IsLocked())
+        if(slock->IsLocked()) {
             slock->Unlock();
-        else
+            use_lock += 1;
+        } else {
             _xend ();
+        }
+        retry_ret += retry;
     }
 
   private:

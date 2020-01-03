@@ -4,7 +4,7 @@ project (occdb)
 cmake_minimum_required(VERSION 2.8)
 
 ## Use C++11 features
-add_definitions(-std=c++11)
+add_definitions(-std=c++14)
 
 ## Set dependencies
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DOS_LINUX -mrtm -g -pthread")
