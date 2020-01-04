@@ -12,7 +12,7 @@ make
 ./coretest
 ```
 
-To enable RTM, use
+RTM is enabled by default. To disbale RTM, use
 ```bash
-cmake .. -DUSE_RTM=ON
+cmake .. -DCMAKE_USE_RTM_STORE=OFF -DCMAKE_USE_RTM_TXN=OFF
 ```
