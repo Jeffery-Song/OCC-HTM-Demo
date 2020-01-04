@@ -33,7 +33,7 @@ class SmallBankLoader {
             bulk_size++;
             if (bulk_size >= SmallBankConstants::BULK_LOAD_SIZE) {
                 bulk_size = 0;
-                ASSERT(txn.Commit());
+                ASSERT_MSG(txn.Commit(), "commit load id=%d failed\n", id);
             }
         }
         if (bulk_size > 0) {

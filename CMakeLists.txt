@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.8)
 add_definitions(-std=c++14)
 
 ## Set dependencies
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DOS_LINUX -mrtm -g -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -mrtm -g -pthread")
 set(BOOST_LIB "/home/sxn/local/boost_1_70_0-install/lib")
 set(CMAKE_BUILD_TYPE Debug)
 
