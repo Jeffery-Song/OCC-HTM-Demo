@@ -18,7 +18,7 @@ class Row {
 #endif
     }
     inline uint64_t get_version() const {return _version;}
-    inline void inc_version() {_version++;}
+    inline void set_version(const uint64_t v) {_version = v;}
 #ifndef USE_RTM_TXN
     inline void lock() {
       pthread_spin_lock(&_lock);

@@ -203,7 +203,7 @@ class Transaction {
             //         buffer.at(key).ptr->payload, buffer.at(key).ptr->get_version(), 
             //         buffer.at(key).data, buffer.at(key).ptr->get_version()+1);
             buffer.at(key).ptr->payload = buffer.at(key).data;
-            buffer.at(key).ptr->inc_version();
+            buffer.at(key).ptr->set_version(buffer.at(key).version + 1);
         }
         // unlock_wset();
     }
