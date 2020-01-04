@@ -164,7 +164,7 @@ class MonitorManager {
         ss << total_cnt << " commited txns, "
            << occ_aborts << " occ aborts, "
            << htm_aborts << " htm aborts, "
-           << htm_use_lock << "htm use locks\n";
+           << htm_use_lock << " htm use locks\n";
         return ss.str();
     }
     void dump(std::ostream & os) {
