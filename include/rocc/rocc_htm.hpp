@@ -47,6 +47,7 @@ class RTMScope {
     SpinLock* slock;
     uint64_t & retry_ret;
     uint64_t & use_lock;
+    bool use_lock_;
 
   public:
 
@@ -57,6 +58,7 @@ class RTMScope {
         //  inline RTMScope(TXProfile* prof, int read = 1, int write = 1, SpinLock* sl = NULL) {
 
         retry = 0;
+        use_lock_ = false;
 
         if(sl == NULL) {
             //If the user doesn't provide a lock, we give him a default locking
@@ -97,6 +99,7 @@ class RTMScope {
             }
         }
         slock->Lock();
+        use_lock_ = true;
     }
 
     void Abort() {
@@ -104,7 +107,7 @@ class RTMScope {
     }
 
     inline  ~RTMScope() {
-        if(slock->IsLocked()) {
+        if(use_lock_) {
             slock->Unlock();
             use_lock += 1;
         } else {
